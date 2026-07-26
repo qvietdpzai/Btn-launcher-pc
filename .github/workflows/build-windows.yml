@@ -16,18 +16,26 @@ on:
           - Release
           - Debug
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   build-windows:
     name: Build Windows (MSVC)
     runs-on: windows-2022
 
+    permissions:
+      contents: read
+      packages: write
+
+    defaults:
+      run:
+        shell: bash
+
     env:
-      BUILD_TYPE: ${{ inputs.build-type || 'Release' }}
-      ARTIFACT_NAME: BTN-Launcher-Windows-MSVC
+      ARTIFACT_NAME: BTN-Launcher-Windows-MSVC-Qt6
       BUILD_PLATFORM: official
+      BUILD_TYPE: ${{ inputs.build-type || 'Release' }}
+      CMAKE_PRESET: windows_msvc
 
     steps:
       - name: Checkout
@@ -35,65 +43,45 @@ jobs:
         with:
           submodules: true
 
-      - name: Setup MSVC Developer Environment
-        uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup dependencies
+        id: setup-dependencies
+        uses: ./.github/actions/setup-dependencies
         with:
-          arch: amd64
-          vsversion: 2022
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: zulu
-          java-version: 17
-
-      - name: Setup vcpkg
-        shell: bash
-        run: |
-          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          aqtversion: "==3.1.*"
-          version: "6.7.3"
-          modules: qtimageformats qtnetworkauth
-          cache: true
+          build-type: ${{ env.BUILD_TYPE }}
+          artifact-name: Windows-MSVC
+          vcvars-arch: amd64
+          qt-version: 6.10.2
 
       - name: Configure project
         run: |
-          cmake --preset windows_msvc
+          cmake --preset "$CMAKE_PRESET"
 
-      - name: Build
+      - name: Run build
         run: |
-          cmake --build --preset windows_msvc --config ${{ env.BUILD_TYPE }}
+          cmake --build --preset "$CMAKE_PRESET" --config "$BUILD_TYPE"
 
       - name: Run tests
         run: |
-          ctest --preset windows_msvc --build-config ${{ env.BUILD_TYPE }}
+          ctest --preset "$CMAKE_PRESET" --build-config "$BUILD_TYPE"
 
-      - name: Package
-        shell: pwsh
+      - name: Get short version
+        id: short-version
+        shell: bash
         run: |
-          cmake --install build --config ${{ env.BUILD_TYPE }}
+          echo "version=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Create portable package
-        shell: pwsh
+      - name: Resolve package version
+        id: package-version
+        shell: bash
         run: |
-          if (Test-Path install-portable) { Remove-Item -Recurse -Force install-portable }
-          Copy-Item -Recurse install install-portable
-          cmake --install build --config ${{ env.BUILD_TYPE }} --prefix install-portable --component portable
+          echo "version=${{ steps.short-version.outputs.version }}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
+      - name: Package (Windows)
+        uses: ./.github/actions/package/windows
         with:
-          name: BTN-Launcher-Windows-${{ env.BUILD_TYPE }}
-          path: install/**/*
-          retention-days: 30
-
-      - name: Upload portable
-        uses: actions/upload-artifact@v4
-        with:
-          name: BTN-Launcher-Windows-Portable-${{ env.BUILD_TYPE }}
-          path: install-portable/**/*
-          retention-days: 30
+          version: ${{ steps.package-version.outputs.version }}
+          build-type: ${{ steps.setup-dependencies.outputs.build-type }}
+          artifact-name: Windows-MSVC
+          azure-client-id: ""
+          azure-tenant-id: ""
+          azure-subscription-id: ""
