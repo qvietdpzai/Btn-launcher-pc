@@ -1,0 +1,25 @@
+name: Publish
+
+on:
+  release:
+    types: [ released ]
+
+permissions: {}
+
+jobs:
+  winget:
+    name: Winget
+
+    permissions:
+      contents: read
+
+    runs-on: ubuntu-slim
+
+    steps:
+      - name: Publish on Winget
+        uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: BTNLauncher.BTNLauncher
+          version: ${{ github.event.release.tag_name }}
+          installers-regex: 'BtnLauncher-Windows-MSVC(:?-arm64|-Legacy)?-Setup-.+\.exe$'
+          token: ${{ secrets.WINGET_TOKEN }}
