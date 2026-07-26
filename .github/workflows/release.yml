@@ -34,7 +34,6 @@ jobs:
           submodules: true
 
       - name: Setup dependencies
-        id: setup-dependencies
         uses: ./.github/actions/setup-dependencies
         with:
           build-type: Release
@@ -42,7 +41,7 @@ jobs:
           vcvars-arch: amd64
           qt-version: 6.10.2
 
-      - name: Configure project
+      - name: Configure
         run: cmake --preset "$CMAKE_PRESET"
 
       - name: Build
@@ -63,43 +62,60 @@ jobs:
           azure-tenant-id: ""
           azure-subscription-id: ""
 
+  build-linux:
+    name: Build Linux (x86_64)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      ARTIFACT_NAME: BTN-Launcher-Linux-x86_64-Qt6
+      BUILD_PLATFORM: official
+      BUILD_TYPE: Release
+      CMAKE_PRESET: linux
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup dependencies
+        uses: ./.github/actions/setup-dependencies
+        with:
+          build-type: Release
+          artifact-name: Linux
+          qt-version: 6.10.2
+
+      - name: Configure
+        run: cmake --preset "$CMAKE_PRESET"
+
+      - name: Build
+        run: cmake --build --preset "$CMAKE_PRESET" --config Release
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: echo "version=${{ inputs.version || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Package
+        uses: ./.github/actions/package/linux
+        with:
+          version: ${{ steps.version.outputs.version }}
+          build-type: Release
+          artifact-name: Linux
+          qt-version: 6.10.2
+
   create_release:
-    needs: build-windows
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: List files
+      - name: List artifacts
         run: find artifacts -type f | head -30
-
-      - name: Package release files
-        id: package
-        shell: bash
-        env:
-          VERSION: ${{ inputs.version || github.ref_name }}
-        run: |
-          mkdir release
-
-          for d in artifacts/BTN-Launcher-Windows-MSVC-Setup-*; do
-            [ -d "$d" ] || continue
-            cp "$d"/*.exe "release/BTN-Launcher-Windows-Setup-${VERSION}.exe" 2>/dev/null || true
-          done
-
-          for d in artifacts/BTN-Launcher-Windows-MSVC-Portable-*; do
-            [ -d "$d" ] || continue
-            cd "$d" && zip -r -9 "../../release/BTN-Launcher-Windows-Portable-${VERSION}.zip" * && cd ../..
-          done
-
-          for d in artifacts/BTN-Launcher-Windows-MSVC-${{ steps.version.outputs.version }}-*; do
-            [ -d "$d" ] || continue
-            [[ "$d" == *Setup* || "$d" == *Portable* ]] && continue
-            cd "$d" && zip -r -9 "../../release/BTN-Launcher-Windows-${VERSION}.zip" * && cd ../..
-          done
-
-          ls -la release/
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -109,4 +125,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release/*
+            artifacts/**/*.exe
+            artifacts/**/*.zip
+            artifacts/**/*.AppImage
+            artifacts/**/*.AppImage.zsync
+            artifacts/**/*.tar.gz
