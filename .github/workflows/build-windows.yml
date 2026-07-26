@@ -24,19 +24,14 @@ jobs:
     name: Build Windows (MSVC)
     runs-on: windows-2022
 
-    permissions:
-      contents: read
-      packages: write
-
     env:
       BUILD_TYPE: ${{ inputs.build-type || 'Release' }}
       ARTIFACT_NAME: BTN-Launcher-Windows-MSVC
       BUILD_PLATFORM: official
-      CMAKE_PRESET: windows_msvc
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -52,29 +47,10 @@ jobs:
           distribution: zulu
           java-version: 17
 
-      - name: Setup vcpkg environment
+      - name: Setup vcpkg
         shell: bash
         run: |
           echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
-
-      - name: Setup vcpkg cache
-        shell: pwsh
-        env:
-          USERNAME: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
-        run: |
-          .$(vcpkg fetch nuget) `
-            sources add `
-            -Source "$env:FEED_URL" `
-            -StorePasswordInClearText `
-            -Name GitHubPackages `
-            -UserName "$env:USERNAME" `
-            -Password "$env:GITHUB_TOKEN"
-          .$(vcpkg fetch nuget) `
-            setapikey "$env:GITHUB_TOKEN" `
-            -Source "$env:FEED_URL"
-          "VCPKG_BINARY_SOURCES=clear;nuget,$env:FEED_URL,readwrite" | Out-File -Append $env:GITHUB_ENV
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -86,27 +62,27 @@ jobs:
 
       - name: Configure project
         run: |
-          cmake --preset "$env:CMAKE_PRESET"
+          cmake --preset windows_msvc
 
       - name: Build
         run: |
-          cmake --build --preset "$env:CMAKE_PRESET" --config "$env:BUILD_TYPE"
+          cmake --build --preset windows_msvc --config ${{ env.BUILD_TYPE }}
 
       - name: Run tests
         run: |
-          ctest --preset "$env:CMAKE_PRESET" --build-config "$env:BUILD_TYPE"
+          ctest --preset windows_msvc --build-config ${{ env.BUILD_TYPE }}
 
       - name: Package
         shell: pwsh
         run: |
-          cmake --install build --config "$env:BUILD_TYPE"
+          cmake --install build --config ${{ env.BUILD_TYPE }}
 
       - name: Create portable package
         shell: pwsh
         run: |
           if (Test-Path install-portable) { Remove-Item -Recurse -Force install-portable }
           Copy-Item -Recurse install install-portable
-          cmake --install build --config "$env:BUILD_TYPE" --prefix install-portable --component portable
+          cmake --install build --config ${{ env.BUILD_TYPE }} --prefix install-portable --component portable
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
