@@ -1,4 +1,4 @@
-name: Build Application and Make Release
+name: Build and Release
 
 on:
   push:
@@ -7,127 +7,106 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release version or tag name to publish
+        description: Release version or tag name
         type: string
         required: true
 
-permissions: {}
+permissions:
+  contents: write
+  packages: write
 
 jobs:
-  build_release:
-    name: Build Release
-    uses: ./.github/workflows/build.yml
-    permissions:
-      contents: read
-      # Required for Azure Trusted Signing
-      id-token: write
-      # Required for vcpkg binary cache
-      packages: write
-    with:
-      build-type: Release
-      environment: Release
-      version: ${{ inputs.version || github.ref_name }}
-    secrets: inherit
-
-  create_release:
-    needs: build_release
-    permissions:
-      contents: write
-    runs-on: ubuntu-slim
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+  build-windows:
+    name: Build Windows (MSVC)
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
+    env:
+      ARTIFACT_NAME: BTN-Launcher-Windows-MSVC-Qt6
+      BUILD_PLATFORM: official
+      BUILD_TYPE: Release
+      CMAKE_PRESET: windows_msvc
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
-          submodules: "true"
-          path: "PrismLauncher-source"
+          submodules: true
+
+      - name: Setup dependencies
+        id: setup-dependencies
+        uses: ./.github/actions/setup-dependencies
+        with:
+          build-type: Release
+          artifact-name: Windows-MSVC
+          vcvars-arch: amd64
+          qt-version: 6.10.2
+
+      - name: Configure project
+        run: cmake --preset "$CMAKE_PRESET"
+
+      - name: Build
+        run: cmake --build --preset "$CMAKE_PRESET" --config Release
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: echo "version=${{ inputs.version || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Package
+        uses: ./.github/actions/package/windows
+        with:
+          version: ${{ steps.version.outputs.version }}
+          build-type: Release
+          artifact-name: Windows-MSVC
+          azure-client-id: ""
+          azure-tenant-id: ""
+          azure-subscription-id: ""
+
+  create_release:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v8
-      - name: Grab and store version
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List files
+        run: find artifacts -type f | head -30
+
+      - name: Package release files
+        id: package
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version || github.ref_name }}
         run: |
-          echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_ENV
-      - name: Package artifacts properly
-        run: |
-          mv ${{ github.workspace }}/PrismLauncher-source BtnLauncher-${{ env.VERSION }}
-          mv PrismLauncher-Linux-Qt6-Portable*/PrismLauncher-portable.tar.gz BtnLauncher-Linux-Qt6-Portable-${{ env.VERSION }}.tar.gz
-          mv PrismLauncher-Linux-aarch64-Qt6-Portable*/PrismLauncher-portable.tar.gz BtnLauncher-Linux-aarch64-Qt6-Portable-${{ env.VERSION }}.tar.gz
-          mv PrismLauncher-*.AppImage/PrismLauncher-*-x86_64.AppImage BtnLauncher-Linux-x86_64.AppImage
-          mv PrismLauncher-*.AppImage.zsync/PrismLauncher-*-x86_64.AppImage.zsync BtnLauncher-Linux-x86_64.AppImage.zsync
-          mv PrismLauncher-*.AppImage/PrismLauncher-*-aarch64.AppImage BtnLauncher-Linux-aarch64.AppImage
-          mv PrismLauncher-*.AppImage.zsync/PrismLauncher-*-aarch64.AppImage.zsync BtnLauncher-Linux-aarch64.AppImage.zsync
-          mv PrismLauncher-macOS*/PrismLauncher.zip BtnLauncher-macOS-${{ env.VERSION }}.zip
-          mv PrismLauncher-macOS*/PrismLauncher.dmg BtnLauncher-macOS-${{ env.VERSION }}.dmg
+          mkdir release
 
-          tar --exclude='.git' -czf BtnLauncher-${{ env.VERSION }}.tar.gz BtnLauncher-${{ env.VERSION }}
-
-          for d in PrismLauncher-Windows-MSVC*; do
-            cd "${d}" || continue
-            LEGACY="$(echo -n ${d} | grep -o Legacy || true)"
-            ARM64="$(echo -n ${d} | grep -o arm64 || true)"
-            INST="$(echo -n ${d} | grep -o Setup || true)"
-            PORT="$(echo -n ${d} | grep -o Portable || true)"
-            NAME="BtnLauncher-Windows-MSVC"
-            test -z "${LEGACY}" || NAME="${NAME}-Legacy"
-            test -z "${ARM64}" || NAME="${NAME}-arm64"
-            test -z "${PORT}" || NAME="${NAME}-Portable"
-            test -z "${INST}" || mv PrismLauncher-*.exe ../${NAME}-Setup-${{ env.VERSION }}.exe
-            test -n "${INST}" || zip -r -9 "../${NAME}-${{ env.VERSION }}.zip" *
-            cd ..
+          for d in artifacts/BTN-Launcher-Windows-MSVC-Setup-*; do
+            [ -d "$d" ] || continue
+            cp "$d"/*.exe "release/BTN-Launcher-Windows-Setup-${VERSION}.exe" 2>/dev/null || true
           done
 
-          for d in PrismLauncher-Windows-MinGW-w64*; do
-            cd "${d}" || continue
-            INST="$(echo -n ${d} | grep -o Setup || true)"
-            PORT="$(echo -n ${d} | grep -o Portable || true)"
-            NAME="BtnLauncher-Windows-MinGW-w64"
-            test -z "${PORT}" || NAME="${NAME}-Portable"
-            test -z "${INST}" || mv PrismLauncher-*.exe ../${NAME}-Setup-${{ env.VERSION }}.exe
-            test -n "${INST}" || zip -r -9 "../${NAME}-${{ env.VERSION }}.zip" *
-            cd ..
+          for d in artifacts/BTN-Launcher-Windows-MSVC-Portable-*; do
+            [ -d "$d" ] || continue
+            cd "$d" && zip -r -9 "../../release/BTN-Launcher-Windows-Portable-${VERSION}.zip" * && cd ../..
           done
 
-          for d in PrismLauncher-Windows-MinGW-arm64*; do
-            cd "${d}" || continue
-            INST="$(echo -n ${d} | grep -o Setup || true)"
-            PORT="$(echo -n ${d} | grep -o Portable || true)"
-            NAME="BtnLauncher-Windows-MinGW-arm64"
-            test -z "${PORT}" || NAME="${NAME}-Portable"
-            test -z "${INST}" || mv PrismLauncher-*.exe ../${NAME}-Setup-${{ env.VERSION }}.exe
-            test -n "${INST}" || zip -r -9 "../${NAME}-${{ env.VERSION }}.zip" *
-            cd ..
+          for d in artifacts/BTN-Launcher-Windows-MSVC-${{ steps.version.outputs.version }}-*; do
+            [ -d "$d" ] || continue
+            [[ "$d" == *Setup* || "$d" == *Portable* ]] && continue
+            cd "$d" && zip -r -9 "../../release/BTN-Launcher-Windows-${VERSION}.zip" * && cd ../..
           done
+
+          ls -la release/
 
       - name: Create release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ env.VERSION }}
-          target_commitish: ${{ github.sha }}
-          name: BTN Launcher ${{ env.VERSION }}
-          draft: true
+          tag_name: ${{ inputs.version || github.ref_name }}
+          name: BTN Launcher ${{ inputs.version || github.ref_name }}
+          draft: false
           prerelease: false
-          fail_on_unmatched_files: true
           files: |
-            BtnLauncher-Linux-x86_64.AppImage
-            BtnLauncher-Linux-x86_64.AppImage.zsync
-            BtnLauncher-Linux-aarch64.AppImage
-            BtnLauncher-Linux-aarch64.AppImage.zsync
-            BtnLauncher-Linux-Qt6-Portable-${{ env.VERSION }}.tar.gz
-            BtnLauncher-Linux-aarch64-Qt6-Portable-${{ env.VERSION }}.tar.gz
-            BtnLauncher-Windows-MinGW-w64-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MinGW-w64-Portable-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MinGW-w64-Setup-${{ env.VERSION }}.exe
-            BtnLauncher-Windows-MinGW-arm64-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MinGW-arm64-Portable-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MinGW-arm64-Setup-${{ env.VERSION }}.exe
-            BtnLauncher-Windows-MSVC-arm64-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MSVC-arm64-Portable-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MSVC-arm64-Setup-${{ env.VERSION }}.exe
-            BtnLauncher-Windows-MSVC-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MSVC-Portable-${{ env.VERSION }}.zip
-            BtnLauncher-Windows-MSVC-Setup-${{ env.VERSION }}.exe
-            BtnLauncher-macOS-${{ env.VERSION }}.zip
-            BtnLauncher-macOS-${{ env.VERSION }}.dmg
-            PrismLauncher-${{ env.VERSION }}.tar.gz
+            release/*
