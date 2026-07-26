@@ -17,20 +17,26 @@ on:
           - Debug
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-windows:
     name: Build Windows (MSVC)
     runs-on: windows-2022
 
+    permissions:
+      contents: read
+      packages: write
+
     env:
       BUILD_TYPE: ${{ inputs.build-type || 'Release' }}
-      ARTIFACT_NAME: Windows-MSVC
+      ARTIFACT_NAME: BTN-Launcher-Windows-MSVC
+      BUILD_PLATFORM: official
+      CMAKE_PRESET: windows_msvc
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -55,7 +61,7 @@ jobs:
         shell: pwsh
         env:
           USERNAME: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
         run: |
           .$(vcpkg fetch nuget) `
@@ -76,35 +82,40 @@ jobs:
           aqtversion: "==3.1.*"
           version: "6.7.3"
           modules: qtimageformats qtnetworkauth
+          cache: true
 
       - name: Configure project
         run: |
-          cmake --preset windows_msvc
+          cmake --preset "$env:CMAKE_PRESET"
 
       - name: Build
         run: |
-          cmake --build --preset windows_msvc --config ${{ env.BUILD_TYPE }}
+          cmake --build --preset "$env:CMAKE_PRESET" --config "$env:BUILD_TYPE"
+
+      - name: Run tests
+        run: |
+          ctest --preset "$env:CMAKE_PRESET" --build-config "$env:BUILD_TYPE"
 
       - name: Package
         shell: pwsh
         run: |
-          cmake --install build --config ${{ env.BUILD_TYPE }}
+          cmake --install build --config "$env:BUILD_TYPE"
 
       - name: Create portable package
         shell: pwsh
         run: |
           if (Test-Path install-portable) { Remove-Item -Recurse -Force install-portable }
           Copy-Item -Recurse install install-portable
-          cmake --install build --config ${{ env.BUILD_TYPE }} --prefix install-portable --component portable
+          cmake --install build --config "$env:BUILD_TYPE" --prefix install-portable --component portable
 
-      - name: Upload artifact (installer files)
+      - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: BTN-Launcher-Windows-${{ env.BUILD_TYPE }}
           path: install/**/*
           retention-days: 30
 
-      - name: Upload portable artifact
+      - name: Upload portable
         uses: actions/upload-artifact@v4
         with:
           name: BTN-Launcher-Windows-Portable-${{ env.BUILD_TYPE }}
