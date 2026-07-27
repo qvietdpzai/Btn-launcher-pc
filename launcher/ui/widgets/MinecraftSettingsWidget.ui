@@ -786,6 +786,52 @@ It is most likely you will need to change the path - please refer to the mod's w
             </widget>
            </item>
            <item>
+            <widget class="QGroupBox" name="zeroTierGroupBox">
+             <property name="title">
+              <string>ZeroTier LAN Play</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_zerotier">
+              <item>
+               <widget class="QCheckBox" name="enableZeroTierLanCheck">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Automatically join ZeroTier network for LAN multiplayer. Requires ZeroTier to be installed on your system.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Enable ZeroTier LAN</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="zeroTierNetworkIdLabel">
+                <property name="text">
+                 <string>Network ID:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="zeroTierNetworkId">
+                <property name="placeholderText">
+                 <string>b103a835d2a2c7b5</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="zeroTierInfoLabel">
+                <property name="text">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p style=&quot;color: gray;&quot;&gt;When enabled, the launcher will auto-join the ZeroTier network before launching the game and leave it after exiting. Other players can connect via your ZeroTier IP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
             <spacer name="verticalSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>

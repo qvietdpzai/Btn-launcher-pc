@@ -223,6 +223,12 @@ void MinecraftSettingsWidget::loadSettings()
     m_ui->useDiscreteGpuCheck->setChecked(settings->get("UseDiscreteGpu").toBool());
     m_ui->useZink->setChecked(settings->get("UseZink").toBool());
 
+    // ZeroTier LAN
+    m_ui->zeroTierGroupBox->setChecked(settings->get("EnableZeroTierLAN").toBool());
+    m_ui->enableZeroTierLanCheck->setChecked(settings->get("EnableZeroTierLAN").toBool());
+    auto ztNetId = settings->get("ZeroTierNetworkId").toString();
+    m_ui->zeroTierNetworkId->setText(ztNetId.isEmpty() ? "b103a835d2a2c7b5" : ztNetId);
+
     if (m_instance != nullptr) {
         // HACK: if we change enable state of child widgets while it's unchecked this creates inconsistency
         m_ui->serverJoinGroupBox->setChecked(true);
@@ -418,6 +424,10 @@ void MinecraftSettingsWidget::saveSettings()
             settings->reset("UseDiscreteGpu");
             settings->reset("UseZink");
         }
+
+        // ZeroTier LAN
+        settings->set("EnableZeroTierLAN", m_ui->zeroTierGroupBox->isChecked());
+        settings->set("ZeroTierNetworkId", m_ui->zeroTierNetworkId->text());
 
         // Game time
         bool gameTime = m_instance == nullptr || m_ui->gameTimeGroupBox->isChecked();

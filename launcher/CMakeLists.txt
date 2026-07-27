@@ -164,6 +164,10 @@ set(LAUNCH_SOURCES
     launch/steps/QuitAfterGameStop.h
     launch/steps/PrintServers.cpp
     launch/steps/PrintServers.h
+    launch/steps/ZeroTierJoin.cpp
+    launch/steps/ZeroTierJoin.h
+    launch/steps/ZeroTierLeave.cpp
+    launch/steps/ZeroTierLeave.h
     launch/LaunchStep.cpp
     launch/LaunchStep.h
     launch/LaunchTask.cpp

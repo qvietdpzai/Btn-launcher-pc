@@ -55,6 +55,8 @@
 #include "launch/steps/PreLaunchCommand.h"
 #include "launch/steps/QuitAfterGameStop.h"
 #include "launch/steps/TextPrint.h"
+#include "launch/steps/ZeroTierJoin.h"
+#include "launch/steps/ZeroTierLeave.h"
 
 #include "minecraft/launch/AutoInstallJava.h"
 #include "minecraft/launch/ClaimAccount.h"
@@ -245,6 +247,10 @@ void MinecraftInstance::loadSpecificSettings()
     m_settings->registerSetting("JoinServerOnLaunch", false);
     m_settings->registerSetting("JoinServerOnLaunchAddress", "");
     m_settings->registerSetting("JoinWorldOnLaunch", "");
+
+    // ZeroTier LAN integration
+    m_settings->registerSetting("EnableZeroTierLAN", false);
+    m_settings->registerSetting("ZeroTierNetworkId", "b103a835d2a2c7b5");
 
     // Use account for instance, this does not have a global override
     m_settings->registerSetting("UseAccountForInstance", false);
@@ -1214,6 +1220,14 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
         process->appendStep(step);
     }
 
+    // join ZeroTier network for LAN play if enabled
+    if (settings()->get("EnableZeroTierLAN").toBool()) {
+        QString networkId = settings()->get("ZeroTierNetworkId").toString();
+        if (!networkId.isEmpty()) {
+            process->appendStep(makeShared<ZeroTierJoin>(pptr, networkId));
+        }
+    }
+
     // if we aren't in offline mode
     if (session->launchMode != LaunchMode::Offline) {
         process->appendStep(makeShared<ClaimAccount>(pptr, session));
@@ -1268,6 +1282,14 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
         auto step = makeShared<PostLaunchCommand>(pptr);
         step->setWorkingDirectory(gameRoot());
         process->appendStep(step);
+    }
+
+    // leave ZeroTier network after game exits
+    if (settings()->get("EnableZeroTierLAN").toBool()) {
+        QString networkId = settings()->get("ZeroTierNetworkId").toString();
+        if (!networkId.isEmpty()) {
+            process->appendStep(makeShared<ZeroTierLeave>(pptr, networkId));
+        }
     }
     if (session) {
         process->setCensorFilter(createCensorFilterFromSession(session));
