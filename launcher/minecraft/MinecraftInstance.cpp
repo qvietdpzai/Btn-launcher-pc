@@ -251,7 +251,7 @@ void MinecraftInstance::loadSpecificSettings()
     // ZeroTier LAN integration
     m_settings->registerSetting("EnableZeroTierLAN", false);
     m_settings->registerSetting("ZeroTierNetworkId", "b103a835d2a2c7b5");
-    m_settings->registerSetting("ZeroTierAuthToken", "");
+    m_settings->registerSetting("ZeroTierApiToken", "");
 
     // Use account for instance, this does not have a global override
     m_settings->registerSetting("UseAccountForInstance", false);
@@ -1224,9 +1224,9 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
     // join ZeroTier network for LAN play if enabled
     if (settings()->get("EnableZeroTierLAN").toBool()) {
         QString networkId = settings()->get("ZeroTierNetworkId").toString();
-        QString authToken = settings()->get("ZeroTierAuthToken").toString();
+        QString apiToken = settings()->get("ZeroTierApiToken").toString();
         if (!networkId.isEmpty()) {
-            process->appendStep(makeShared<ZeroTierJoin>(pptr, networkId, authToken));
+            process->appendStep(makeShared<ZeroTierJoin>(pptr, networkId, apiToken));
         }
     }
 

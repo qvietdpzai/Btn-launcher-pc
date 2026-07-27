@@ -821,14 +821,14 @@ It is most likely you will need to change the path - please refer to the mod's w
                <item>
                 <widget class="QLabel" name="zeroTierAuthTokenLabel">
                  <property name="text">
-                  <string>Auth Token (auto-authenticate):</string>
+                  <string>API Token (tu dong xac nhan):</string>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLineEdit" name="zeroTierAuthToken">
                  <property name="placeholderText">
-                  <string>Leave empty for auto-approve network</string>
+                  <string>Token tu ZeroTier Central de tu dong authorize</string>
                  </property>
                  <property name="echoMode">
                   <enum>QLineEdit::Password</enum>
@@ -838,7 +838,7 @@ It is most likely you will need to change the path - please refer to the mod's w
                <item>
                 <widget class="QLabel" name="zeroTierInfoLabel">
                  <property name="text">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p style=&quot;color: gray;&quot;&gt;Launcher bundles ZeroTier. No separate install needed. Auto-joins network before game, auto-leaves after exit. Other players connect via your ZeroTier IP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p style=&quot;color: gray;&quot;&gt;ZeroTier duoc tich hop san. Khong can cai dat rieng. Tu dong xac nhan node moi qua API. Lay token tai: my.zerotier.com -&gt; Account -&gt; API Access&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="wordWrap">
                   <bool>true</bool>

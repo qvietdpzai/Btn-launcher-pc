@@ -228,7 +228,7 @@ void MinecraftSettingsWidget::loadSettings()
     m_ui->enableZeroTierLanCheck->setChecked(settings->get("EnableZeroTierLAN").toBool());
     auto ztNetId = settings->get("ZeroTierNetworkId").toString();
     m_ui->zeroTierNetworkId->setText(ztNetId.isEmpty() ? "b103a835d2a2c7b5" : ztNetId);
-    m_ui->zeroTierAuthToken->setText(settings->get("ZeroTierAuthToken").toString());
+    m_ui->zeroTierAuthToken->setText(settings->get("ZeroTierApiToken").toString());
 
     if (m_instance != nullptr) {
         // HACK: if we change enable state of child widgets while it's unchecked this creates inconsistency
@@ -429,7 +429,7 @@ void MinecraftSettingsWidget::saveSettings()
         // ZeroTier LAN
         settings->set("EnableZeroTierLAN", m_ui->zeroTierGroupBox->isChecked());
         settings->set("ZeroTierNetworkId", m_ui->zeroTierNetworkId->text());
-        settings->set("ZeroTierAuthToken", m_ui->zeroTierAuthToken->text());
+        settings->set("ZeroTierApiToken", m_ui->zeroTierAuthToken->text());
 
         // Game time
         bool gameTime = m_instance == nullptr || m_ui->gameTimeGroupBox->isChecked();
