@@ -16,6 +16,8 @@ class ZeroTierLeave : public LaunchStep {
     void on_state(LoggedProcess::State state);
 
    private:
+    QString findZerotierCli();
     LoggedProcess m_process;
     QString m_networkId;
+    QString m_ztDir;
 };
