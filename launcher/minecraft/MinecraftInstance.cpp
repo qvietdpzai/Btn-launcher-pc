@@ -634,6 +634,29 @@ QStringList MinecraftInstance::javaArguments()
         // allow reflective access to java.net - required by the skin fix
         args << "--add-opens" << "java.base/java.net=ALL-UNNAMED";
 
+    // Performance optimizations for better FPS
+    // Use G1GC with tuned settings for Minecraft (low-latency garbage collection)
+    args << "-XX:+UseG1GC";
+    args << "-XX:+ParallelRefProcEnabled";
+    args << "-XX:MaxGCPauseMillis=200";
+    args << "-XX:+UnlockExperimentalVMOptions";
+    args << "-XX:G1NewSizePercent=30";
+    args << "-XX:G1MaxNewSizePercent=50";
+    args << "-XX:G1HeapRegionSize=8M";
+    args << "-XX:G1ReservePercent=20";
+    args << "-XX:G1HeapWastePercent=5";
+    args << "-XX:G1MixedGCCountTarget=4";
+    args << "-XX:InitiatingHeapOccupancyPercent=15";
+    args << "-XX:G1MixedGCLiveThresholdPercent=90";
+    args << "-XX:G1RSetUpdatingPauseTimePercent=5";
+    args << "-XX:SurvivorRatio=32";
+    args << "-XX:+PerfDisableSharedMem";
+    args << "-XX:MaxTenuringThreshold=1";
+    // Use AOT compilation for faster startup
+    args << "-XX:+TieredCompilation";
+    args << "-XX:+UseCompressedOops";
+    args << "-XX:+AlwaysPreTouch";
+
     return args;
 }
 
@@ -745,6 +768,11 @@ QProcessEnvironment MinecraftInstance::createLaunchEnvironment()
         env.insert("GALLIUM_DRIVER", "zink");
         env.insert("LIBGL_KOPPER_DRI2", "1");
     }
+
+    // OpenGL performance optimizations
+    env.insert("__GL_THREADED_OPTIMIZATIONS", "1");
+    env.insert("__GL_SYNC_TO_VBLANK", "0");
+    env.insert("vblank_mode", "0");
 #endif
     return env;
 }

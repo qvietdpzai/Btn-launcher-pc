@@ -87,11 +87,17 @@ QString useQTForArch()
 
 int defaultMaxJvmMem()
 {
-    // If totalRAM < 6GB, use (totalRAM / 1.5), else 4GB
-    if (const uint64_t totalRAM = HardwareInfo::totalRamMiB(); totalRAM < (4096 * 1.5))
-        return totalRAM / 1.5;
+    const uint64_t totalRAM = HardwareInfo::totalRamMiB();
+    // Give Minecraft more RAM on high-RAM systems for better FPS
+    // <4GB: 75% of RAM, <8GB: 60% of RAM, <16GB: 50% of RAM, else: 8GB
+    if (totalRAM < 4096)
+        return static_cast<int>(totalRAM * 0.75);
+    else if (totalRAM < 8192)
+        return static_cast<int>(totalRAM * 0.6);
+    else if (totalRAM < 16384)
+        return static_cast<int>(totalRAM * 0.5);
     else
-        return 4096;
+        return 8192;
 }
 
 QString getSupportedJavaArchitecture()

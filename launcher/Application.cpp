@@ -732,7 +732,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting({ "ProxyPass", "ProxyPassword" }, "");
 
         // Memory
-        m_settings->registerSetting({ "MinMemAlloc", "MinMemoryAlloc" }, 512);
+        m_settings->registerSetting({ "MinMemAlloc", "MinMemoryAlloc" }, 1024);
         m_settings->registerSetting({ "MaxMemAlloc", "MaxMemoryAlloc" }, SysInfo::defaultMaxJvmMem());
         m_settings->registerSetting("PermGen", 128);
         m_settings->registerSetting("LowMemWarning", true);
