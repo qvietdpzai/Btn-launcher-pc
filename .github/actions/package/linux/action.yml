@@ -96,7 +96,7 @@ runs:
         echo "QT_QPA_PLATFORMTHEME=xdgdesktopportal" >> "$INSTALL_APPIMAGE_DIR"/.env
         ln -s org.btnlauncher.BtnLauncher.metainfo.xml "$INSTALL_APPIMAGE_DIR"/share/metainfo/org.btnlauncher.BtnLauncher.appdata.xml
         ln -s share/applications/org.btnlauncher.BtnLauncher.desktop "$INSTALL_APPIMAGE_DIR"
-        ln -s share/icons/hicolor/256x256/apps/org.btnlauncher.BtnLauncher_256.png "$INSTALL_APPIMAGE_DIR"
+        cp "$INSTALL_APPIMAGE_DIR"/share/icons/hicolor/256x256/apps/org.btnlauncher.BtnLauncher_256.png "$INSTALL_APPIMAGE_DIR"/org.btnlauncher.BtnLauncher.png
         mv "$INSTALL_APPIMAGE_DIR"/{sharun,AppRun}
         ls -la "$INSTALL_APPIMAGE_DIR"
 
