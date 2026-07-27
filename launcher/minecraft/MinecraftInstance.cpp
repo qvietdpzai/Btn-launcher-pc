@@ -1227,7 +1227,6 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
             process->appendStep(makeShared<ZeroTierJoin>(pptr, networkId));
         }
     }
-    }
 
     // if we aren't in offline mode
     if (session->launchMode != LaunchMode::Offline) {
