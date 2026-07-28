@@ -21,6 +21,7 @@
 
 #include "modplatform/ModIndex.h"
 
+#include <QList>
 #include <QString>
 #include <QUrl>
 #include <QVariant>
