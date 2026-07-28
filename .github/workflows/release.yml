@@ -106,7 +106,7 @@ jobs:
           qt-version: 6.10.2
 
   create_release:
-    needs: [build-windows, build-linux]
+    needs: [build-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
