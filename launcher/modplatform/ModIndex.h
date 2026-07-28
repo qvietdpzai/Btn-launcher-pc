@@ -53,11 +53,11 @@ using enum ModLoaderType;
 Q_DECLARE_FLAGS(ModLoaderTypes, ModLoaderType)
 QList<ModLoaderType> modLoaderTypesToList(ModLoaderTypes flags);
 
-enum class ResourceProvider : std::uint8_t { MODRINTH, FLAME };
+enum class ResourceProvider : uint8_t { MODRINTH, FLAME };
 
-enum class DependencyType : std::uint8_t { REQUIRED, OPTIONAL, INCOMPATIBLE, EMBEDDED, TOOL, INCLUDE, UNKNOWN };
+enum class DependencyType : uint8_t { REQUIRED, OPTIONAL, INCOMPATIBLE, EMBEDDED, TOOL, INCLUDE, UNKNOWN };
 
-enum class Side : std::uint8_t { NoSide = 0, ClientSide = 1U << 0U, ServerSide = 1U << 1U, UniversalSide = ClientSide | ServerSide };
+enum class Side : uint8_t { NoSide = 0, ClientSide = 1U << 0U, ServerSide = 1U << 1U, UniversalSide = ClientSide | ServerSide };
 
 namespace SideUtils {
 QString toString(Side side);
