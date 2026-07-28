@@ -155,20 +155,18 @@ void LauncherPartLaunch::executeTask()
         m_process.start(javaPath, args);
     }
 
-    // AI Turbo: boost process priority for better FPS
+    // AI Turbo v1.6: boost process priority to HIGH for max FPS
     if (instance->settings()->get("EnableAITurbo").toBool()) {
         auto pid = m_process.processId();
         if (pid) {
 #ifdef Q_OS_WIN
-            // Set Above Normal priority on Windows
             auto hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, pid);
             if (hProcess) {
-                SetPriorityClass(hProcess, ABOVE_NORMAL_PRIORITY_CLASS);
+                SetPriorityClass(hProcess, HIGH_PRIORITY_CLASS);
                 CloseHandle(hProcess);
             }
 #elif defined(Q_OS_LINUX)
-            // Set nice value -10 (above normal) on Linux
-            setpriority(PRIO_PROCESS, pid, -10);
+            setpriority(PRIO_PROCESS, pid, -15);
 #endif
         }
     }

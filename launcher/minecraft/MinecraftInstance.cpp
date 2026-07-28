@@ -641,11 +641,11 @@ QStringList MinecraftInstance::javaArguments()
         // allow reflective access to java.net - required by the skin fix
         args << "--add-opens" << "java.base/java.net=ALL-UNNAMED";
 
-    // Performance optimizations for better FPS
+    // BTN Launcher v1.6: enhanced performance optimizations
     // Use G1GC with tuned settings for Minecraft (low-latency garbage collection)
     args << "-XX:+UseG1GC";
     args << "-XX:+ParallelRefProcEnabled";
-    args << "-XX:MaxGCPauseMillis=200";
+    args << "-XX:MaxGCPauseMillis=50";
     args << "-XX:+UnlockExperimentalVMOptions";
     args << "-XX:G1NewSizePercent=30";
     args << "-XX:G1MaxNewSizePercent=50";
@@ -659,21 +659,25 @@ QStringList MinecraftInstance::javaArguments()
     args << "-XX:SurvivorRatio=32";
     args << "-XX:+PerfDisableSharedMem";
     args << "-XX:MaxTenuringThreshold=1";
-    // Use AOT compilation for faster startup
     args << "-XX:+TieredCompilation";
     args << "-XX:+UseCompressedOops";
     args << "-XX:+AlwaysPreTouch";
 
-    // AI Turbo: aggressive optimizations for maximum FPS
+    // AI Turbo: aggressive optimizations for maximum FPS (v1.6 enhanced)
     if (settings()->get("EnableAITurbo").toBool()) {
         args << "-XX:+UseStringDeduplication";
         args << "-XX:+OptimizeStringConcat";
         args << "-XX:+UseFastAccessorMethods";
         args << "-XX:+AggressiveOpts";
         args << "-XX:+UseAdaptiveSizePolicy";
+        args << "-XX:+UseCodeCacheFlushing";
+        args << "-XX:+CMSTriggerRatio=70";
         args << "-XX:ParallelGCThreads=4";
         args << "-XX:ConcGCThreads=2";
         args << "-XX:+DisableExplicitGC";
+        args << "-XX:+AlwaysPreTouch";
+        args << "-XX:+UseNUMA";
+        args << "-XX:+UseLargePages";
         args << "-XX:+ShowCodeDetailsInExceptionMessages";
     }
 
@@ -789,16 +793,20 @@ QProcessEnvironment MinecraftInstance::createLaunchEnvironment()
         env.insert("LIBGL_KOPPER_DRI2", "1");
     }
 
-    // OpenGL performance optimizations
+    // BTN Launcher v1.6: enhanced OpenGL performance optimizations
     env.insert("__GL_THREADED_OPTIMIZATIONS", "1");
     env.insert("__GL_SYNC_TO_VBLANK", "0");
     env.insert("vblank_mode", "0");
+    env.insert("__GL_SHADER_DISK_CACHE", "1");
+    env.insert("__GL_SHADER_DISK_CACHE_SIZE", "134217728");
 
-    // AI Turbo: aggressive GPU optimizations
+    // AI Turbo v1.6: aggressive GPU optimizations
     if (settings()->get("EnableAITurbo").toBool()) {
         env.insert("MESA_NO_ERROR", "1");
         env.insert("__GL_ALLOW_UNOFFICIAL_PROTOCOL", "1");
         env.insert("mesa_glthread", "true");
+        env.insert("__GL_THREADED_OPTIMIZATIONS", "1");
+        env.insert("MESA_GL_VERSION_OVERRIDE", "4.5");
     }
 #endif
     return env;

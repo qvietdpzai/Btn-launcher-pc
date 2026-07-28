@@ -106,7 +106,7 @@ jobs:
           qt-version: 6.10.2
 
   create_release:
-    needs: [build-linux]
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -126,6 +126,7 @@ jobs:
           prerelease: false
           files: |
             artifacts/BTN-Launcher-*-Setup-*/*Setup*.exe
+            artifacts/BTN-Launcher-*-Portable-*/*.zip
             artifacts/BTN-Launcher-Linux-*/*.AppImage
             artifacts/BTN-Launcher-Linux-*/*.AppImage.zsync
             artifacts/BTN-Launcher-Linux-*/*.tar.gz
