@@ -218,6 +218,7 @@ void MinecraftSettingsWidget::loadSettings()
 
     // Performance
     m_ui->perfomanceGroupBox->setChecked(m_instance == nullptr || settings->get("OverridePerformance").toBool());
+    m_ui->enableAITurboCheck->setChecked(settings->get("EnableAITurbo").toBool());
     m_ui->enableFeralGamemodeCheck->setChecked(settings->get("EnableFeralGamemode").toBool());
     m_ui->enableMangoHud->setChecked(settings->get("EnableMangoHud").toBool());
     m_ui->useDiscreteGpuCheck->setChecked(settings->get("UseDiscreteGpu").toBool());
@@ -414,11 +415,13 @@ void MinecraftSettingsWidget::saveSettings()
             settings->set("OverridePerformance", performance);
 
         if (performance) {
+            settings->set("EnableAITurbo", m_ui->enableAITurboCheck->isChecked());
             settings->set("EnableFeralGamemode", m_ui->enableFeralGamemodeCheck->isChecked());
             settings->set("EnableMangoHud", m_ui->enableMangoHud->isChecked());
             settings->set("UseDiscreteGpu", m_ui->useDiscreteGpuCheck->isChecked());
             settings->set("UseZink", m_ui->useZink->isChecked());
         } else {
+            settings->reset("EnableAITurbo");
             settings->reset("EnableFeralGamemode");
             settings->reset("EnableMangoHud");
             settings->reset("UseDiscreteGpu");

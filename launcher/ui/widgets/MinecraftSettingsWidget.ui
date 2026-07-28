@@ -743,6 +743,19 @@ It is most likely you will need to change the path - please refer to the mod's w
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
               <item>
+               <widget class="QCheckBox" name="enableAITurboCheck">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;AI Turbo Mode&lt;/b&gt; - Auto-optimize CPU priority, memory allocation, and JVM arguments for maximum FPS. Boosts game process priority and uses intelligent defaults based on your hardware.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>AI Turbo Mode</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="enableFeralGamemodeCheck">
                 <property name="toolTip">
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable Feral Interactive's GameMode, to potentially improve gaming performance.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

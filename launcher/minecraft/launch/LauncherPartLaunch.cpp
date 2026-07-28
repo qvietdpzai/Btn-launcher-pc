@@ -38,6 +38,12 @@
 #include <QRegularExpression>
 #include <QStandardPaths>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#elif defined(Q_OS_LINUX)
+#include <sys/resource.h>
+#endif
+
 #include "Application.h"
 #include "Commandline.h"
 #include "FileSystem.h"
@@ -147,6 +153,24 @@ void LauncherPartLaunch::executeTask()
         m_process.start(wrapperCommand, wrapperArgs + args);
     } else {
         m_process.start(javaPath, args);
+    }
+
+    // AI Turbo: boost process priority for better FPS
+    if (instance->settings()->get("EnableAITurbo").toBool()) {
+        auto pid = m_process.processId();
+        if (pid) {
+#ifdef Q_OS_WIN
+            // Set Above Normal priority on Windows
+            auto hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, pid);
+            if (hProcess) {
+                SetPriorityClass(hProcess, ABOVE_NORMAL_PRIORITY_CLASS);
+                CloseHandle(hProcess);
+            }
+#elif defined(Q_OS_LINUX)
+            // Set nice value -10 (above normal) on Linux
+            setpriority(PRIO_PROCESS, pid, -10);
+#endif
+        }
     }
 
 #ifdef Q_OS_LINUX

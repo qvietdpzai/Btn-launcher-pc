@@ -223,6 +223,7 @@ void MinecraftInstance::loadSpecificSettings()
 
         // Performance related options
         auto performanceOverride = m_settings->registerSetting("OverridePerformance", false);
+        m_settings->registerOverride(global_settings->getSetting("EnableAITurbo"), performanceOverride);
         m_settings->registerOverride(global_settings->getSetting("EnableFeralGamemode"), performanceOverride);
         m_settings->registerOverride(global_settings->getSetting("EnableMangoHud"), performanceOverride);
         m_settings->registerOverride(global_settings->getSetting("UseDiscreteGpu"), performanceOverride);
@@ -663,6 +664,19 @@ QStringList MinecraftInstance::javaArguments()
     args << "-XX:+UseCompressedOops";
     args << "-XX:+AlwaysPreTouch";
 
+    // AI Turbo: aggressive optimizations for maximum FPS
+    if (settings()->get("EnableAITurbo").toBool()) {
+        args << "-XX:+UseStringDeduplication";
+        args << "-XX:+OptimizeStringConcat";
+        args << "-XX:+UseFastAccessorMethods";
+        args << "-XX:+AggressiveOpts";
+        args << "-XX:+UseAdaptiveSizePolicy";
+        args << "-XX:ParallelGCThreads=4";
+        args << "-XX:ConcGCThreads=2";
+        args << "-XX:+DisableExplicitGC";
+        args << "-XX:+ShowCodeDetailsInExceptionMessages";
+    }
+
     return args;
 }
 
@@ -779,6 +793,13 @@ QProcessEnvironment MinecraftInstance::createLaunchEnvironment()
     env.insert("__GL_THREADED_OPTIMIZATIONS", "1");
     env.insert("__GL_SYNC_TO_VBLANK", "0");
     env.insert("vblank_mode", "0");
+
+    // AI Turbo: aggressive GPU optimizations
+    if (settings()->get("EnableAITurbo").toBool()) {
+        env.insert("MESA_NO_ERROR", "1");
+        env.insert("__GL_ALLOW_UNOFFICIAL_PROTOCOL", "1");
+        env.insert("mesa_glthread", "true");
+    }
 #endif
     return env;
 }
